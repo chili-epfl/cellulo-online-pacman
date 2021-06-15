@@ -324,7 +324,7 @@ public class PacManController : MonoBehaviourPun
 
         if (PhotonNetwork.IsMasterClient)
         {
-            // _localPlayer.SetDirectionalInputRestricted(_localInputAxes);
+            _localPlayer.SetDirectionalInputRestricted(_localInputAxes);
             _remotePlayer.SetDirectionalInputRestricted(_remoteInputAxes);
         }
 
