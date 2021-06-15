@@ -1,8 +1,7 @@
 
-## Cellulo Online Game 2
+## Cellulo Online Pacman
 
-##### https://metatinker.github.io/cellulo-online2/
+##### https://chili-epfl.github.io/cellulo-online-pacman/
 
-Development will present testing mode that will not require any outside
-cellulo's to speed up development.
+
 
