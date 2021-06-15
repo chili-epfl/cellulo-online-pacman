@@ -807,6 +807,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wall6
       objectReference: {fileID: 0}
+    - target: {fileID: 8288387892181554276, guid: 69fed185a2a2f44c486b7ead0275e109,
+        type: 3}
+      propertyPath: sceneViewId
+      value: 14
+      objectReference: {fileID: 0}
     - target: {fileID: 8675442727889674035, guid: 69fed185a2a2f44c486b7ead0275e109,
         type: 3}
       propertyPath: m_Name
