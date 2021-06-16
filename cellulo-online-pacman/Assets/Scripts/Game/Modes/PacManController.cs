@@ -105,9 +105,13 @@ public class PacManController : MonoBehaviourPun
     //========================================================================
     // Callbacks for Cellulo Entities (all "assigned" in Start())
 
-    /// This is a callback is for collecting collectibles and updating score
+    /// This is a callback is for collecting collectibles (Apples) and updating score
+    /// This is meant to be called by OnTriggerEnter2D on the Pac-Man CelluloEntity(ies).
     private void CollectApple(Collider2D other)
     {
+        // Get the Collectible script attached to GameObject.
+        // if the GameObject doesn't have a Collectible script attached to it
+        // its not a collectible. So we just return.
         var collectible = other.GetComponent<Collectible>();
         if (collectible == null) return;
 
@@ -122,6 +126,7 @@ public class PacManController : MonoBehaviourPun
         if (_gameState != GameState.Active)
             return;
 
+        // Start Ghost chasing
         if (_pacManMode == PacManMode.CoOp)
             _aiChasingMode = AiChasingMode.ShortestPath;
 
@@ -129,6 +134,7 @@ public class PacManController : MonoBehaviourPun
         _collectedCollectibles.Add(collectible);
         UpdateScore();
 
+        // If score is 6 it means all Apples were collected and game is won!
         if (_score == 6)
         {
             if (_aiChasingMode != AiChasingMode.None)
@@ -141,6 +147,7 @@ public class PacManController : MonoBehaviourPun
     }
 
     /// Callback for catching the Pac-Man
+    /// Is meant to be called by OnCollisionEnter2D of the Ghost CelluloEntity.
     private void CatchPacMan(Collision2D collision)
     {
         if (_gameState != GameState.Active)
@@ -157,6 +164,7 @@ public class PacManController : MonoBehaviourPun
     }
 
     /// Callback for when Pac-Man is no longer "caught"
+    /// Is meant to be called by OnCollisionExit2D of the Ghost CelluloEntity.
     private void UncatchPacMan(Collision2D collision)
     {
         // The other cellulo Entity
@@ -187,11 +195,13 @@ public class PacManController : MonoBehaviourPun
 
         SetScore(0);
 
+        // Set Photon update rates (to higher values than default to make game smoother)
         PhotonNetwork.SendRate = 60;
         PhotonNetwork.SerializationRate = 30;
 
         if (!PhotonNetwork.IsMasterClient) return;
 
+        // Setup all the Cellulo Entities according to how the chosen Pac-Man game mode.
         if (_pacManMode == PacManMode.Adversarial) {
             //----------------------------------------------------------------
             // Setup Local Player (The Pac-Man)
@@ -203,7 +213,13 @@ public class PacManController : MonoBehaviourPun
                     Quaternion.identity);
 
             _localPlayer = localPlayerGameObject.AddComponent<CelluloEntity>();
-            _localPlayer.Initialize(_isGameVirtual, _gameController.initialMoveSpeed, _gameController.celluloPacManColor, CollectApple);
+            _localPlayer.Initialize(
+                _isGameVirtual,
+                _gameController.initialMoveSpeed,
+                _gameController.celluloPacManColor,
+                CollectApple // Pass the CollectApple method to the Pac-Man CelluloEntity.
+                             // Will be called when OnTriggerEnter2D is called.
+            );
             _localPlayer.gameObject.name += "(local)";
 
             //----------------------------------------------------------------
@@ -244,7 +260,12 @@ public class PacManController : MonoBehaviourPun
                     Quaternion.identity);
 
             _localPlayer = localPlayerGameObject.AddComponent<CelluloEntity>();
-            _localPlayer.Initialize(_isGameVirtual, _gameController.initialMoveSpeed, _gameController.celluloPacManColor, CollectApple);
+            _localPlayer.Initialize(
+                _isGameVirtual,
+                _gameController.initialMoveSpeed,
+                _gameController.celluloPacManColor,
+                CollectApple
+            );
             _localPlayer.gameObject.name += "(local)";
 
             //----------------------------------------------------------------
@@ -257,7 +278,12 @@ public class PacManController : MonoBehaviourPun
                     Quaternion.identity);
 
             _remotePlayer = remotePlayerGameObject.AddComponent<CelluloEntity>();
-            _remotePlayer.Initialize(_isGameVirtual, _gameController.initialMoveSpeed, _gameController.celluloPacMan2Color, CollectApple);
+            _remotePlayer.Initialize(
+                _isGameVirtual,
+                _gameController.initialMoveSpeed,
+                _gameController.celluloPacMan2Color,
+                CollectApple
+            );
             _remotePlayer.gameObject.name += "(remote)";
 
             //----------------------------------------------------------------
@@ -276,9 +302,9 @@ public class PacManController : MonoBehaviourPun
                 null,
                 null,
                 x => {
+                    // Catch Pac-Man and stop AI chasing
                     CatchPacMan(x);
                     AiStopChasing();
-                    // _aiChasingMode = AiChasingMode.Deactivating;
                 },
                 UncatchPacMan
             );
@@ -295,8 +321,12 @@ public class PacManController : MonoBehaviourPun
         _logger = gameObject.AddComponent<Logger>();
     }
 
-    private int _frame = 0; // Frame rate is 60fps
-    private const int PunSendFrequency = 3; // Every 3 frames
+    private int _frame = 0; // Default Unity frame rate is 60fps
+
+    /// <summary>
+    /// Controls how often keyboard inputs are sent over Photon. This could be 1 with no issue.
+    /// </summary>
+    private const int PunSendFrequency = 3;
 
     private void Update()
     {
@@ -324,7 +354,12 @@ public class PacManController : MonoBehaviourPun
 
         if (PhotonNetwork.IsMasterClient)
         {
-            _localPlayer.SetDirectionalInputRestricted(_localInputAxes);
+            // Allows controlling Cellulo Entity of local player with keyboard.
+            // Disable this for games with real Cellulo to not mess with
+            // the resistance the robot has to movement by hand (by default).
+            if (Globals.DebugAllowLocalControlOfPlayer)
+                _localPlayer.SetDirectionalInputRestricted(_localInputAxes);
+
             _remotePlayer.SetDirectionalInputRestricted(_remoteInputAxes);
         }
 
@@ -343,6 +378,9 @@ public class PacManController : MonoBehaviourPun
 
         if (_pacManMode == PacManMode.CoOp)
         {
+            // All the AI chasing logic in this if condition below.
+            // It consists of calculating the shortest paths to each robot.
+            // Then telling the Ghost to chase the closest Pac-Man.
             if (_aiChasingMode == AiChasingMode.ShortestPath)
             {
                 if (_navNodes == null)
@@ -379,11 +417,17 @@ public class PacManController : MonoBehaviourPun
     //========================================================================
     // Game state transitions
 
+    /// <summary>
+    /// Changes the game state and performs the according changes for transition
+    /// </summary>
+    /// <param name="newGameState"></param>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     private void ChangeGameState(GameState newGameState)
     {
         switch (newGameState)
         {
             case GameState.Ready:
+                // Set all robot lights ot their default color. To allow players to find which Cellulo is theirs.
                 _celluloEntities.ForEach(celluloEntity => celluloEntity.LightsDefault());
                 break;
             case GameState.Active:
@@ -394,6 +438,7 @@ public class PacManController : MonoBehaviourPun
                 // Drop all apples & reset score
                 ResetApples();
 
+                // Set Cellulos lighting to Catch color (Red) to signify they got caught.
                 _localPlayer.SetVisualEffect(VisualEffectConstAll, _gameController.cellulosCatchColor);
                 if (_pacManMode == PacManMode.CoOp)
                     _remotePlayer.SetVisualEffect(VisualEffectConstAll, _gameController.cellulosCatchColor);
@@ -405,9 +450,10 @@ public class PacManController : MonoBehaviourPun
                 _gameController.DisplayWinPanel(timeToWin);
                 Debug.Log("You win!! - Time : " + timeToWin);
 
+                // Write game summary to log.
                 _logger.writeGameSummaryToLog(_pacManMode, timeToWin, _timesCaught);
 
-
+                // Set Win blinking lights!
                 var _players = new List<CelluloEntity> {_localPlayer};
                 if (_pacManMode == PacManMode.CoOp)
                 {

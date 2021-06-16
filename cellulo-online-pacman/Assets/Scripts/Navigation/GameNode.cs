@@ -5,6 +5,14 @@ using UnityEngine;
 
 namespace Navigation
 {
+    /// <summary>
+    /// To be attached to GameObjects in Unity and allow designing navigation graphs through Unity.
+    /// The neighbours should be set accordingly in Unity. This pretty much represents a
+    /// vertex and its adjacency list.
+    ///
+    /// The navigation algorithm later converts these infos of all GameNodes into a
+    /// list of Vertices and Edges. G = (V,E) which is used by the shortest path algorithm.
+    /// </summary>
     public class GameNode : MonoBehaviour
     {
         public Vector2 Position => gameObject.transform.position;
@@ -16,6 +24,7 @@ namespace Navigation
 
         private List<GameNode> _neighbours;
 
+        /// The adjacency list of this GameNode/(vertex).
         public List<GameNode> Neighbours
         {
             get
@@ -45,6 +54,10 @@ namespace Navigation
             }
         }
 
+        /// <summary>
+        /// Generates the _algoNode which contains this vertexes information
+        /// in the structure used by the algorithm.
+        /// </summary>
         public void GenerateAlgoNode()
         {
             _algoNode = ConvertGameNode();

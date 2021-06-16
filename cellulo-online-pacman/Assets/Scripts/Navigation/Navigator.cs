@@ -6,8 +6,18 @@ using UnityEngine;
 
 namespace Navigation
 {
-    public class Navigator
+    /// <summary>
+    /// Class acts as the interface for all navigation calculations of the Game.
+    /// It interfaces with the general C# implementation of the shortest path algorithm.
+    /// </summary>
+    public static class Navigator
     {
+        /// <summary>
+        /// Finds the Closest GameNode to a given position.
+        /// </summary>
+        /// <param name="gameNodes">List of all GameNodes on active map.</param>
+        /// <param name="pos"></param>
+        /// <returns>The closest game mode and the distance to it.</returns>
         public static Tuple<GameNode, float> FindClosestNode(List<GameNode> gameNodes, Vector2 pos)
         {
             List<Tuple<GameNode, float>> gameNodeDistTuple =
@@ -20,6 +30,13 @@ namespace Navigation
             return closestNodeDistTuple;
         }
 
+        /// <summary>
+        /// Finds the shortest path between 2 game nodes.
+        /// </summary>
+        /// <param name="gameNodes">List of all GameNodes on active map.</param>
+        /// <param name="start">Path start.</param>
+        /// <param name="end">Path end.</param>
+        /// <returns>The shortest path</returns>
         public static List<Vector2> FindShortestPath(List<GameNode> gameNodes, GameNode start, GameNode end)
         {
             var map = GenerateMap(gameNodes, start, end);
@@ -30,6 +47,11 @@ namespace Navigation
             return shortestPath.Select(x => x.Original.Position).ToList();
         }
 
+        /// <summary>
+        /// Calculates the total length of a path
+        /// </summary>
+        /// <param name="path">Path as an ordered list of positions.</param>
+        /// <returns></returns>
         public static float PathLength(List<Vector2> path)
         {
             var length = 0f;
@@ -61,7 +83,7 @@ namespace Navigation
             return new Map {StartNode = start.AlgoNode, Nodes = nodes, EndNode = end.AlgoNode};
         }
 
-        public static void ConnectNodes(Node a, Node b, float dist)
+        private static void ConnectNodes(Node a, Node b, float dist)
         {
             a.Connections.Add(new Edge(){ConnectedNode = b, Cost = dist, Length = dist});
         }

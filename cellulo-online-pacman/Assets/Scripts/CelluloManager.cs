@@ -15,7 +15,7 @@ public static class CelluloManager
         {
             Cellulo.initialize();
             IsCelluloHost = true;
-            Debug.Log("Cellulo Initalized!");
+            Debug.Log("Cellulo Initialized!");
         }
         else
         {

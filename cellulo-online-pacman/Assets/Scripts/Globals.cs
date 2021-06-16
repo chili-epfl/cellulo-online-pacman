@@ -5,21 +5,36 @@ using UnityEngine;
 public static class Globals
 {
        //---------------------------------------------------------------------
-       // Debug
+       // Debug Controls
        public static readonly bool DebugShowPing = true;
+
+       // This boolean enables the shortcut for filling room settings. In the main menu.
+       // Press Ctrl-D to fill name and room name and create room.
+       // Press Ctrl-Shift D to fill name and room name and join room.
        public static readonly bool DebugCreateJoinRoomShortcut = true;
-       public static readonly bool DebugFillRoomSettings = false;
+
+       public static readonly bool DebugAllowLocalControlOfPlayer = true;
+
+       // When true allows controlling the remote player from the local computer while holding shift
        public static readonly bool DebugShiftToControlPlayer2 = false;
 
-       // Enabled by setting DebugFillRoomSettings to true
+       // Will just set the create room settings to the values set just below.
+       public static readonly bool DebugFillRoomSettings = false;
        public const GameMode DebugGamemodeSelection = GameMode.PacmanCoopVirtual;
        public const int DebugMapSelection = 2; // Valid maps are 1, 2
 
        //---------------------------------------------------------------------
 
+       // Keys used in PUN Room Custom Properties
        public const string CustomPropertiesGamemodeKey = "gm";
        public const string CustomPropertiesMapKey = "map";
 
+       //---------------------------------------------------------------------
+
+       /// <summary>
+       /// If Cellulo library is adapted to run on more Operating Systems they can
+       /// be added here!
+       /// </summary>
        private static readonly RuntimePlatform[] CelluloCompatiblePlatforms =
               {RuntimePlatform.LinuxEditor, RuntimePlatform.LinuxPlayer};
 
@@ -87,6 +102,13 @@ public static class Globals
        // private const float game_map_y_max = real_map_y_max;
        // private const float game_map_y_min = real_map_y_min;
 
+       /// <summary>
+       /// Since the need for rescaling has been removed the function isn't really needed
+       /// anymore. It been left here just in case.
+       /// </summary>
+       /// <param name="real_x"></param>
+       /// <param name="real_y"></param>
+       /// <returns></returns>
        public static Vector2 MapCoordsToGameCoords(float real_x, float real_y)
        {
               // float game_x = Rescale(real_x, real_map_x_min, real_map_x_max, game_map_x_min, game_map_x_max);

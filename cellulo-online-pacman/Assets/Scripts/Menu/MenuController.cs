@@ -96,6 +96,7 @@ public sealed class MenuController : MonoBehaviourPunCallbacks
                 _mainSelectableRobin.Next().Select();
             }
 
+            // Code for the shortcut for filling in debug room parameters.
             if (Globals.DebugCreateJoinRoomShortcut && Input.GetKeyDown(KeyCode.D) &&
                 (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))
             {
@@ -161,6 +162,7 @@ public sealed class MenuController : MonoBehaviourPunCallbacks
     {
         Debug.Log("Creating Room " + roomNameInput.text);
 
+        // Create room with some "hardcoded" settings and pass the custom properties
         var roomOptions = new RoomOptions
         {
             IsVisible = true,

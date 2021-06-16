@@ -54,15 +54,24 @@ public class CelluloEntity : MonoBehaviour
 
     /// <summary>
     /// Replacement for constructor must call at creation.
+    ///
+    /// Note: The constructor has several optional arguments of type Action which are basically
+    /// methods to be called on a certain Unity trigger. For example: OnTriggerEnter2D
+    /// is called when the CelluloEntity Collider2D collides with another Collider2D.
+    /// See Unity documentation about Collider2D and RigidBody2D for more info.
     /// </summary>
-    /// <param name="isCelluloVirtual"></param>
+    /// <param name="isCelluloVirtual"> If false the Cellulo will try to connect to a real
+    /// Cellulo robot using Cellulo Manager. Otherwise, the CelluloEntity is just
+    /// simulated within Unity.</param>
     /// <param name="moveSpeed"> Either cellulo moveSpeed or rigidBody movespeed </param>
-    /// <param name="onTriggerEnter2D"> Used to allow the controller to add extra
-    /// behaviour upon colliding with a collider. For example: adding logic for
-    /// collecting collectibles. </param>
-    /// <param name="onTriggerExit2D"></param>
-    /// <param name="onCollisionEnter2D"></param>
-    /// <param name="onCollisionExit2D"></param>
+    /// <param name="defaultColor"> Default Cellulo Lighting Color. Irrelevant for if
+    /// isCelluloVirtual is true. Cellulo LEDs are set to this color when calling LightsDefault.</param>
+    /// <param name="onTriggerEnter2D"> Called when OnTriggerEnter2D is called (by Unity).
+    /// For example in the Pac-Man game it is used for running the logic for collecting
+    /// collectibles (apples). </param>
+    /// <param name="onTriggerExit2D"> Called when no longer in a collision. </param>
+    /// <param name="onCollisionEnter2D"> Called when entering a collision with a RigidBody2D. </param>
+    /// <param name="onCollisionExit2D"> Called when exiting a collision with a RigidBody2D. </param>
     /// <exception cref="InvalidOperationException"></exception>
     public void Initialize(
         bool isCelluloVirtual,
@@ -97,12 +106,19 @@ public class CelluloEntity : MonoBehaviour
 
             Cellulo.setPoseChangedCallback(() =>
             {
-                // Debug.Log("Cellulo " + Cellulo.macAddr + " pos - x: " + Cellulo.getX() + "  y: " + Cellulo.getY());
+                // Note: In Cellulo Map y axis points downwards. In Unity it points up.
+                //       Thus we must flip the y axis.
+
                 _realCelluloPosition = MapCoordsToGameCoords(Cellulo.getX(), - Cellulo.getY());
+                // Debug.Log("Cellulo " + Cellulo.macAddr + " pos - x: " + Cellulo.getX() + "  y: " + Cellulo.getY());
             });
         }
     }
 
+    /// <summary>
+    /// Set the velocity of the Cellulo to input * moveSpeed
+    /// </summary>
+    /// <param name="inputAxes"> 2D vector encoding the directional input to Cellulo. </param>
     public void SetDirectionalInput(Vector2 inputAxes)
     {
         _movementMode = MovementMode.Velocity;
@@ -121,6 +137,14 @@ public class CelluloEntity : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets the velocity of the Cellulo according to input while also
+    /// restricting movement according to if movement towards some direction
+    /// is disabled.
+    ///
+    /// For instance, this is used to make sure robots cannot go through walls.
+    /// </summary>
+    /// <param name="inputAxes"> 2D vector encoding the directional input to Cellulo. </param>
     public void SetDirectionalInputRestricted(Vector2 inputAxes)
     {
         var restrictedInputAxes = inputAxes;
@@ -139,6 +163,12 @@ public class CelluloEntity : MonoBehaviour
         SetDirectionalInput(restrictedInputAxes);
     }
 
+    /// <summary>
+    /// Tells the CelluloEntity to move towards some position on the map.
+    ///
+    /// Side-note: One can check if the position has been reached by reading GoalPosReached.
+    /// </summary>
+    /// <param name="position"></param>
     public void SetGoalPosition(Vector2 position)
     {
         _movementMode = MovementMode.Position;
@@ -160,6 +190,9 @@ public class CelluloEntity : MonoBehaviour
 
     private List<Vector2> _path;
 
+    /// <summary>
+    /// Read-only property. Returns the position of this CelluloEntity.
+    /// </summary>
     public Vector2 Position
     {
         get
@@ -174,11 +207,26 @@ public class CelluloEntity : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Distance to Goal Position.
+    /// </summary>
     public float DistToGoalPos => (_currentGoalPosition - Position).magnitude;
+
+    /// <summary>
+    /// Normalized Direction towards Goal Position.
+    /// </summary>
     public Vector2 DirToGoalPos => (_currentGoalPosition - Position).normalized;
 
+    /// <summary>
+    /// True if the Goal position is closer than GoalPosThreshold.
+    /// </summary>
     public bool GoalPosReached => DistToGoalPos < GoalPosThreshold;
 
+    /// <summary>
+    /// Sets the goal path for the Cellulo to follow.
+    /// </summary>
+    /// <param name="path"> A list of vectors defining each position in the
+    /// target goal of the robot. The each node in the path is traversed in-order.</param>
     public void SetGoalPath(List<Vector2> path)
     {
         if (logPathing)
@@ -211,6 +259,11 @@ public class CelluloEntity : MonoBehaviour
     //------------------------------------------------------------------------
     // Lighting
 
+    /// <summary>
+    /// Converts a Unity Color into r, g, b longs used by Cellulo API.
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
     private static (long r, long g, long b) ColorToCelluloRGB(Color color)
     {
         var r = (long) (color.r * 255f);
@@ -220,6 +273,12 @@ public class CelluloEntity : MonoBehaviour
         return (r,g,b);
     }
 
+    /// <summary>
+    /// Same ase Cellulo.setVisualEffect but using VisualEffect Enum and Unity Color
+    /// </summary>
+    /// <param name="visualEffect"></param>
+    /// <param name="color"></param>
+    /// <param name="value">Depends on visualEffect. See CelluloEnums for info.</param>
     public void SetVisualEffect(CelluloEnums.VisualEffect visualEffect, Color color, long value = 0)
     {
         if (IsCelluloVirtual) return;
@@ -234,8 +293,6 @@ public class CelluloEntity : MonoBehaviour
 
     public void LightsSingle(int index)
     {
-        // if ()
-
         SetVisualEffect(VisualEffectConstSingle, defaultColor, index);
     }
 
@@ -244,6 +301,9 @@ public class CelluloEntity : MonoBehaviour
     //     LightSetVisualEffect(VisualEffectProgress, defaultColor, (long) (255.0f * score/ 6));
     // }
 
+    /// <summary>
+    /// Turns all Cellulo lights off.
+    /// </summary>
     public void LightsOff()
     {
         SetVisualEffect(VisualEffectConstAll, Color.black, 0);
@@ -274,6 +334,9 @@ public class CelluloEntity : MonoBehaviour
     {
         if (IsCelluloVirtual)
         {
+            // Since Unity doesn't have a SetGoalPosition. This is part of the implementation
+            // that simulates that behaviour. Basically moves the RigidBody2D towards the goal
+            // position until it is reached.
             if (_movementMode == MovementMode.Position || _movementMode == MovementMode.Path)
             {
                 _SetDirectionalInput(DistToGoalPos < 2 ? Vector2.zero : DirToGoalPos);
@@ -309,6 +372,7 @@ public class CelluloEntity : MonoBehaviour
         if (_movementMode == MovementMode.Path)
         {
             // If path is empty (has been fully covered) stop pathing.
+            // Otherwise go to the next node in the path.
             if (DistToGoalPos < PathFindingThreshold)
             {
                 if (logPathing)
@@ -323,9 +387,12 @@ public class CelluloEntity : MonoBehaviour
     {
         if (_onTriggerEnter2D != null)
         {
+            // Calls the "custom" onTrigger2D passed in Initialize.
             _onTriggerEnter2D(other);
         }
 
+        // If in contact with a wall restrict movement towards the direction
+        // that the wall restricts movement.
         Wall wall = other.GetComponent<Wall>();
         if (wall != null)
         {
@@ -340,6 +407,8 @@ public class CelluloEntity : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
+        // When no longer in contact with a wall allow movement towards
+        // restricted direction again.
         Wall wall = other.GetComponent<Wall>();
         if (wall != null && (_disallowMovementDirs & wall.disallowMovementDirs) == wall.disallowMovementDirs)
         {
@@ -352,11 +421,6 @@ public class CelluloEntity : MonoBehaviour
         if (_onCollisionEnter2D != null)
         {
             _onCollisionEnter2D(collision);
-        }
-
-        foreach (ContactPoint2D contact in collision.contacts)
-        {
-            Debug.DrawRay(contact.point, contact.normal, Color.magenta);
         }
     }
 

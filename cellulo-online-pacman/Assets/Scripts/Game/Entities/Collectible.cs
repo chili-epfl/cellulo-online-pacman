@@ -5,8 +5,14 @@ using UnityEngine;
 
 public class Collectible : MonoBehaviourPun
 {
+
+    /// This should be that same number as that of the apple on the real paper Cellulo map. (1-6)
     public int id;
 
+
+    /// <summary>
+    /// Makes the apple disappear for all players connected to the game.
+    /// </summary>
     public void Collect()
     {
         photonView.RPC("CollectibleCollectRPC", RpcTarget.All);
@@ -18,6 +24,9 @@ public class Collectible : MonoBehaviourPun
         gameObject.SetActive(false);
     }
 
+    /// <summary>
+    /// Makes the apple reappear for all players connected to the game.
+    /// </summary>
     public void Drop()
     {
         photonView.RPC("CollectibleDropRPC", RpcTarget.All);

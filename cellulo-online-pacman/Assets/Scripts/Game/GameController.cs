@@ -9,7 +9,7 @@ using static Globals;
 using static PacManController;
 
 /// <summary>
-/// Initially intended to be a controller for all gamemodes. It is now more
+/// Initially intended to be a controller for all game modes. It is now more
 /// specific to all Pac-Man game modes. Though, it could still used to accomodate
 /// non Pac-Man game modes.
 /// </summary>
@@ -57,7 +57,7 @@ public class GameController : MonoBehaviour
             SceneManager.LoadScene(menuScene.name);
         }
 
-        // Initalize Cellulo Robot Communication
+        // Initialize Cellulo Robot Communication
         if (PhotonNetwork.IsMasterClient)
             CelluloManager.TryInitialize();
 
@@ -78,7 +78,7 @@ public class GameController : MonoBehaviour
         var gameMapIndex = (int) customProperties[CustomPropertiesMapKey];
         var gameMap = ActivateMap(gameMapIndex);
 
-        Debug.Log("Gamemode: " + gameMode);
+        Debug.Log("Game mode: " + gameMode);
 
         if (gameMode == GameMode.Pacman)
         {
